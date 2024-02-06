@@ -62,9 +62,9 @@ To install Neo4j Desktop, go to https://neo4j.com/download-center/[Neo4j Downloa
 
 == Temporal Graph Support ==
 
-You can find the implementation for temporal graphs in the temporal-graph submodule.
+You can find the implementation for temporal graph storage in the `community/temporal-graph` submodule.
 
-The implementation of temporal Cypher and procedures can be found in the temporal-procs submodule.
+The implementation of temporal Cypher and procedures can be found in the `community/temporal-procs` submodule.
 
 == Licensing ==
 
