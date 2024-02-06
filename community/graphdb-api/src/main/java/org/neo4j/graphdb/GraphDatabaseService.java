@@ -22,6 +22,7 @@ package org.neo4j.graphdb;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.NotImplementedException;
 import org.neo4j.annotations.api.PublicApi;
 
 /**
@@ -133,4 +134,16 @@ public interface GraphDatabaseService {
      * @return database name
      */
     String databaseName();
+
+    default Object getTransactionEventListeners() {
+        throw new NotImplementedException("not implemented");
+    }
+
+    default Object getPageCache() {
+        throw new NotImplementedException("not implemented");
+    }
+
+    default Object getFileSystem() {
+        throw new NotImplementedException("not implemented");
+    }
 }

@@ -171,4 +171,19 @@ public class GraphDatabaseFacade extends GraphDatabaseTransactions implements Gr
     public String toString() {
         return dbmsInfo + "/" + mode + " [" + databaseLayout() + "]";
     }
+
+    @Override
+    public Object getTransactionEventListeners() {
+        return database.getTransactionEventListeners();
+    }
+
+    @Override
+    public Object getPageCache() {
+        return database.getPageCache();
+    }
+
+    @Override
+    public Object getFileSystem() {
+        return database.getFileSystem();
+    }
 }

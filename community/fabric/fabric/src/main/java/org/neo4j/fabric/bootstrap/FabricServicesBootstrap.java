@@ -28,6 +28,7 @@ import java.util.concurrent.Executor;
 import org.neo4j.bolt.dbapi.BoltGraphDatabaseManagementServiceSPI;
 import org.neo4j.bolt.dbapi.BoltGraphDatabaseServiceSPI;
 import org.neo4j.bolt.dbapi.CustomBookmarkFormatParser;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.bolt.txtracking.TransactionIdTracker;
 import org.neo4j.collection.Dependencies;
 import org.neo4j.configuration.Config;
@@ -52,6 +53,9 @@ import org.neo4j.fabric.executor.FabricLocalExecutor;
 import org.neo4j.fabric.executor.FabricRemoteExecutor;
 import org.neo4j.fabric.executor.FabricStatementLifecycles;
 import org.neo4j.fabric.executor.ThrowingFabricRemoteExecutor;
+import org.neo4j.fabric.parser.ParseException;
+import org.neo4j.fabric.parser.ProcedureStruct;
+import org.neo4j.fabric.parser.TemporalCypherParser;
 import org.neo4j.fabric.planning.FabricPlanner;
 import org.neo4j.fabric.transaction.ErrorReporter;
 import org.neo4j.fabric.transaction.FabricTransactionMonitor;
@@ -222,6 +226,26 @@ public abstract class FabricServicesBootstrap {
             @Override
             public Optional<CustomBookmarkFormatParser> getCustomBookmarkFormatParser() {
                 return fabricDatabaseManagementService.getCustomBookmarkFormatParser();
+            }
+
+            @Override
+            public RunMessage preprocessStatement(RunMessage message) {
+                if (message.statement().toLowerCase().startsWith("use")) {
+                    return evaluateUseStatement(message);
+                }
+                return message;
+            }
+
+            public RunMessage evaluateUseStatement(RunMessage message) {
+                if (message.statement().toLowerCase().startsWith("use neo4j for system_time")) {
+                    try {
+                        var struct = new TemporalCypherParser(new java.io.StringReader(message.statement())).start();
+                        message = ProcedureStruct.convertToMessage(struct, message);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return message;
             }
         };
     }

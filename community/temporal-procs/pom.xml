@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.neo4j</groupId>
+        <artifactId>parent</artifactId>
+        <version>5.7.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <properties>
+        <license-text.header>headers/GPL-3-header.txt</license-text.header>
+        <licensing.prepend.text>licensing/notice-gpl-prefix.txt</licensing.prepend.text>
+        <default.jupiter.test.mode>concurrent</default.jupiter.test.mode>
+        <uberjar.name>neo4j-temporal-procs</uberjar.name>
+        <jmh.version>1.35</jmh.version>
+        <java.version>17</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <junit-jupiter.version>5.9.1</junit-jupiter.version>
+        <maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
+        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <assertj.version>3.22.0</assertj.version>
+        <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
+
+        <gds.version>2.4.0-alpha06</gds.version>
+
+        <moduleName>org.neo4j.temporalprocs</moduleName>
+    </properties>
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>neo4j-temporal-procs</artifactId>
+
+    <packaging>jar</packaging>
+    <name>Neo4j - Temporal Graph Procedures</name>
+    <description>Temporal Graph Procedures.</description>
+    <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
+
+    <scm>
+        <connection>scm:git:git://github.com/neo4j/neo4j.git</connection>
+        <developerConnection>scm:git:git@github.com:neo4j/neo4j.git</developerConnection>
+        <url>https://github.com/neo4j/neo4j</url>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License, Version 3</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
+            <comments>
+                The software ("Software") developed and owned by Neo4j Sweden AB (referred to in this notice as "Neo4j") is
+                licensed under the GNU GENERAL PUBLIC LICENSE Version 3 to all third
+                parties and that license is included below.
+
+                However, if you have executed an End User Software License and Services
+                Agreement or an OEM Software License and Support Services Agreement, or
+                another commercial license agreement with Neo4j or one of its
+                affiliates (each, a "Commercial Agreement"), the terms of the license in
+                such Commercial Agreement will supersede the GNU GENERAL PUBLIC LICENSE
+                Version 3 and you may use the Software solely pursuant to the terms of
+                the relevant Commercial Agreement.
+            </comments>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <!-- Main dependencies -->
+        <dependency>
+            <!-- This gives us the Procedure API our runtime code uses.
+                 We have a `provided` scope on it, because when this is
+                 deployed in a Neo4j Instance, the API will be provided
+                 by Neo4j. If you add non-Neo4j dependencies to this
+                 project, their scope should normally be `compile` -->
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>${project.version}</version>
+            <!--<scope>provided</scope>-->
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-temporal-graph</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>core</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>graph-schema-api</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>config-api</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>progress-tracking</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>transaction</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>open-model-catalog</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>proc-catalog</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>proc-centrality</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>proc-community</artifactId>
+            <version>${gds.version}</version>
+        </dependency>
+
+
+        <!-- Test dependencies -->
+        <!--<dependency>
+            &lt;!&ndash; Used to send cypher statements to our procedure. &ndash;&gt;
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            &lt;!&ndash;<version>${neo4j.version}</version>&ndash;&gt;
+            <scope>test</scope>
+        </dependency>-->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--<dependency>
+            <groupId>org.neo4j.test</groupId>
+            <artifactId>neo4j-harness</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>proc</artifactId>
+            <version>${gds.version}</version>
+            <scope>test</scope>
+        </dependency>-->
+
+        <!-- TODO: Remove the dependencies below and set the scope of neo4j to provided -->
+        <dependency>
+            <groupId>org.neo4j.test</groupId>
+            <artifactId>neo4j-harness</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-bolt</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.gds</groupId>
+            <artifactId>proc</artifactId>
+            <version>${gds.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>0.17</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <!--<build>
+        <plugins>
+            <plugin>
+                <groupId>org.neo4j.build.plugins</groupId>
+                <artifactId>licensing-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-licenses</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>${java.version}</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+            <plugin>
+                &lt;!&ndash; This generates a jar-file with our procedure code,
+                     plus any dependencies marked as `compile` scope.
+                     This should then be deployed in the `plugins` directory
+                     of each Neo4j instance in your deployment.
+                     After a restart, the procedure is available for calling. &ndash;&gt;
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            &lt;!&ndash; Shading signed JARs will fail without this. http://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar &ndash;&gt;
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            &lt;!&ndash;<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>&ndash;&gt;
+        </plugins>
+    </build>-->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.neo4j.build.plugins</groupId>
+                <artifactId>licensing-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-licenses</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

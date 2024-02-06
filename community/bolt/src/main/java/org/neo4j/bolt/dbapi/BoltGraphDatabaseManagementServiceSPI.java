@@ -21,6 +21,7 @@ package org.neo4j.bolt.dbapi;
 
 import java.util.Optional;
 import org.neo4j.bolt.protocol.common.bookmark.Bookmark;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.dbms.api.DatabaseNotFoundException;
 import org.neo4j.kernel.availability.UnavailableException;
 import org.neo4j.memory.MemoryTracker;
@@ -39,5 +40,9 @@ public interface BoltGraphDatabaseManagementServiceSPI {
      */
     default Optional<CustomBookmarkFormatParser> getCustomBookmarkFormatParser() {
         return Optional.empty();
+    }
+
+    default RunMessage preprocessStatement(RunMessage message) {
+        return message;
     }
 }

@@ -80,6 +80,9 @@ public class ReadyState extends AbstractState {
     protected State processRunMessage(RunMessage message, StateMachineContext context) throws Exception {
         long start = context.clock().millis();
 
+        // Intercept temporal queries and rewrite them into procedures
+        message = context.connection().preprocessStatement(message);
+
         var tx = context.connection()
                 .beginTransaction(
                         TransactionType.IMPLICIT,

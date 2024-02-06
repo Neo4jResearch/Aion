@@ -45,6 +45,7 @@ import org.neo4j.bolt.protocol.common.message.AccessMode;
 import org.neo4j.bolt.protocol.common.message.Error;
 import org.neo4j.bolt.protocol.common.message.notifications.NotificationsConfig;
 import org.neo4j.bolt.protocol.common.message.request.RequestMessage;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.bolt.protocol.common.message.response.FailureMessage;
 import org.neo4j.bolt.protocol.common.signal.StateSignal;
 import org.neo4j.bolt.runtime.BoltConnectionAuthFatality;
@@ -623,5 +624,10 @@ public class AtomicSchedulingConnection extends AbstractConnection {
                     this.executor,
                     this.clock);
         }
+    }
+
+    @Override
+    public RunMessage preprocessStatement(RunMessage message) {
+        return this.connector().transactionManager().preprocessStatement(message);
     }
 }

@@ -31,6 +31,7 @@ import org.neo4j.bolt.dbapi.BoltGraphDatabaseServiceSPI;
 import org.neo4j.bolt.protocol.common.bookmark.Bookmark;
 import org.neo4j.bolt.protocol.common.connector.tx.TransactionOwner;
 import org.neo4j.bolt.protocol.common.message.AccessMode;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.bolt.tx.error.DatabaseUnavailableTransactionCreationException;
 import org.neo4j.bolt.tx.error.NoSuchDatabaseTransactionCreationException;
 import org.neo4j.bolt.tx.error.TransactionException;
@@ -126,5 +127,10 @@ public class TransactionManagerImpl implements TransactionManager {
         public void onClose(Transaction transaction) {
             transactionMap.remove(transaction.id());
         }
+    }
+
+    @Override
+    public RunMessage preprocessStatement(RunMessage message) {
+        return this.graphDatabaseManagementService.preprocessStatement(message);
     }
 }

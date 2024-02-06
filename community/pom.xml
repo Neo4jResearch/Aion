@@ -22,6 +22,8 @@
   </properties>
 
   <modules>
+    <module>temporal-graph</module>
+    <module>temporal-procs</module>
     <module>zstd-proxy</module>
     <module>token-api</module>
     <module>schema</module>

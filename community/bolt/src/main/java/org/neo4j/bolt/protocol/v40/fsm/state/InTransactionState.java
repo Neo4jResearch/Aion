@@ -66,6 +66,10 @@ public class InTransactionState extends AbstractStreamingState {
                 .orElseThrow(() -> new IllegalStateException("Transaction has already been closed"));
 
         long start = context.clock().millis();
+
+        // Intercept temporal queries and rewrite them into procedures
+        message = context.connection().preprocessStatement(message);
+
         Statement statement;
         statement = tx.run(message.statement(), message.params());
         long end = context.clock().millis();

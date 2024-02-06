@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.neo4j.bolt.protocol.common.bookmark.Bookmark;
 import org.neo4j.bolt.protocol.common.connector.tx.TransactionOwner;
 import org.neo4j.bolt.protocol.common.message.AccessMode;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.bolt.tx.error.TransactionException;
 import org.neo4j.kernel.impl.query.NotificationConfiguration;
 
@@ -69,4 +70,6 @@ public interface TransactionManager {
             Map<String, Object> metadata,
             NotificationConfiguration notificationsConfig)
             throws TransactionException;
+
+    RunMessage preprocessStatement(RunMessage message);
 }

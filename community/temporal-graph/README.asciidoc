@@ -1,0 +1,23 @@
+= Temporal Graphs =
+
+First, follow the instructions of the `compile-gds.sh` script to build a modified version of GDS. This can be found in `community/temporal-graph/scripts/compile-gds.sh`.
+
+Then, build the project by running the following command in the parent folder:
+
+  mvn clean install -DskipTests -Dspotless.check.skip -Dlicense.skip -Denforcer.skip -T1C
+
+The above compiles all the required dependencies for temporal graphs. See the tests for examples of temporal storage and retrieval.
+
+== Running benchmarks ==
+These are the steps to run the paper benchmarks on the community edition (the paper uses the enterprise version of Neo4j):
+
+* Download the datasets from http://konect.cc/networks/ or https://snap.stanford.edu/data/.
+* Change the path to the datasets folder in line 42 of `community/temporal-graph/src/main/java/org/neo4j/temporalgraph/benchmarks/data/GraphLoader.java`
+* Go to the `community/temporal-graph/scripts` folder and modify appropriately the example-neo4j.env file.
+* Run `source example-neo4j.env`.
+* Use the scripts starting with the `run-` prefix in the scripts folder to run the paper benchmarks.
+
+== Issues with jdk.javadoc.internal.tool ==
+If there is an exception related to `jdk.javadoc.internal.tool`, add to VM options the following:
+
+  --add-exports jdk.javadoc/jdk.javadoc.internal.tool=ALL-UNNAMED

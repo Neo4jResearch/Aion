@@ -116,4 +116,19 @@ public class ProcedureGraphDatabaseAPI extends GraphDatabaseTransactions impleme
             TransactionExceptionMapper transactionExceptionMapper) {
         return beginTransaction(type, loginContext, clientInfo, timeout, unit);
     }
+
+    @Override
+    public Object getTransactionEventListeners() {
+        return delegate.getTransactionEventListeners();
+    }
+
+    @Override
+    public Object getPageCache() {
+        return delegate.getPageCache();
+    }
+
+    @Override
+    public Object getFileSystem() {
+        return delegate.getFileSystem();
+    }
 }

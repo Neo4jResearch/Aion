@@ -42,6 +42,7 @@ import org.neo4j.bolt.protocol.common.message.AccessMode;
 import org.neo4j.bolt.protocol.common.message.notifications.NotificationsConfig;
 import org.neo4j.bolt.protocol.common.message.request.RequestMessage;
 import org.neo4j.bolt.protocol.common.message.request.connection.RoutingContext;
+import org.neo4j.bolt.protocol.common.message.request.transaction.RunMessage;
 import org.neo4j.bolt.protocol.io.pipeline.PipelineContext;
 import org.neo4j.bolt.security.error.AuthenticationException;
 import org.neo4j.bolt.tx.Transaction;
@@ -423,5 +424,9 @@ public interface Connection extends TrackedNetworkConnection, TransactionOwner {
          * @return a connection.
          */
         Connection create(Connector connector, String id, Channel channel);
+    }
+
+    default RunMessage preprocessStatement(RunMessage message) {
+        return message;
     }
 }

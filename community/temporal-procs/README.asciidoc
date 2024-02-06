@@ -1,0 +1,80 @@
+= Temporal Procedures =
+
+First, follow the instructions of the `compile-gds.sh` script to build a modified version of GDS. This can be found in `community/temporal-procs/scripts/compile-gds.sh`.
+
+Then, build the project by running the following command in the parent folder:
+
+  mvn clean install -DskipTests -Dspotless.check.skip -Dlicense.skip -Denforcer.skip -T1C
+
+The above compiles all the required dependencies for temporal graphs. See the tests for examples of temporal Cypher and procedures.
+
+== Running Neo4j with temporal Cypher ==
+Start a database instance with temporal support preloaded using `community/temporal-procs/src/main/java/org/neo4j/temporalprocs/Main.java`.
+
+To connect with CLI to the database, `cd` into `packaging/standalone/target` and extract the version you want. Then execute:
+
+ ./bin/cypher-shell -u neo4j -p 12345678
+
+Here are some examples of temporal Cypher:
+
+Add data:
+
+ CREATE
+  (alice:User {posts: 4, seed_label: 52}),
+  (bridget:User {posts: 13, seed_label: 21}),
+  (charles:User {posts: 55, seed_label: 43}),
+  (doug:User {posts: 5, seed_label: 21}),
+  (mark:User {posts: 7, seed_label: 19}),
+  (michael:User {posts: 15, seed_label: 52}),
+  (alice)-[:FOLLOW {weight: 1}]->(bridget),
+  (alice)-[:FOLLOW {weight: 10}]->(charles),
+  (mark)-[:FOLLOW {weight: 1}]->(doug),
+  (bridget)-[:FOLLOW {weight: 1}]->(michael),
+  (doug)-[:FOLLOW {weight: 1}]->(mark),
+  (michael)-[:FOLLOW {weight: 1}]->(alice),
+  (alice)-[:FOLLOW {weight: 1}]->(michael),
+  (bridget)-[:FOLLOW {weight: 1}]->(alice),
+  (michael)-[:FOLLOW {weight: 1}]->(bridget),
+  (charles)-[:FOLLOW {weight: 1}]->(doug);
+
+Update node 2:
+
+ MATCH (n) WHERE id(n) = 2 SET n:Engineer, n.posts = 100;
+
+Delete node 2:
+
+ MATCH (n) WHERE id(n) = 2 DETACH DELETE n;
+
+Get node history:
+
+ USE neo4j FOR SYSTEM_TIME CONTAINED IN (0, 1791505338587)
+ MATCH (n)
+ WHERE id(n) = 2
+ RETURN n;
+
+Show expand:
+
+ USE neo4j FOR SYSTEM_TIME AS OF 1791505338587
+ MATCH (n)-[r:2]->(m)
+ WHERE id(n) = 1
+ RETURN m;
+
+Get all nodes for different snapshots:
+
+ USE neo4j FOR SYSTEM_TIME AS OF 1791505338587
+ MATCH (n)
+ RETURN n;
+
+== Running benchmarks ==
+These are the steps to run the paper benchmarks on the community edition (the paper uses the enterprise version of Neo4j):
+
+* Download the datasets from http://konect.cc/networks/ or https://snap.stanford.edu/data/.
+* Change the path to the datasets folder in line 42 of `community/temporal-graph/src/main/java/org/neo4j/temporalgraph/benchmarks/data/GraphLoader.java`
+* Go to the `community/temporal-procs/scripts` folder and modify appropriately the example-neo4j.env file.
+* Run `source example-neo4j.env`.
+* Use the scripts starting with the `run-` prefix in the scripts folder to run the paper benchmarks.
+
+== Issues with jdk.javadoc.internal.tool ==
+If there is an exception related to `jdk.javadoc.internal.tool`, add to VM options the following:
+
+  --add-exports jdk.javadoc/jdk.javadoc.internal.tool=ALL-UNNAMED

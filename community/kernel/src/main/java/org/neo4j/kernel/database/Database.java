@@ -1223,4 +1223,16 @@ public class Database extends AbstractDatabase {
     private static boolean isNotMultiVersioned(DatabaseConfig databaseConfig) {
         return !"multiversion".equals(databaseConfig.get(db_format));
     }
+
+    public GlobalTransactionEventListeners getTransactionEventListeners() {
+        return transactionEventListeners;
+    }
+
+    public PageCache getPageCache() {
+        return globalPageCache;
+    }
+
+    public FileSystemAbstraction getFileSystem() {
+        return fs;
+    }
 }

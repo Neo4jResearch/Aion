@@ -1,0 +1,95 @@
+diff --git a/build.gradle b/build.gradle
+index 6d2713de31..42812b5b1c 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -84,3 +84,4 @@ apply from: 'gradle/checkstyle.gradle'
+ apply from: 'gradle/spotbugs.gradle'
+ apply from: 'gradle/spotless.gradle'
+ apply from: 'gradle/pregel-bootstrap.gradle'
++apply from: 'gradle/maven-publish.gradle'
+diff --git a/gradle/dependencies.gradle b/gradle/dependencies.gradle
+index 4edcf871f6..043d97bdd7 100644
+--- a/gradle/dependencies.gradle
++++ b/gradle/dependencies.gradle
+@@ -11,7 +11,7 @@ ext {
+         '5.8': properties.getOrDefault('neo4jVersion58', '5.8.0'),
+     ]
+ 
+-    neo4jDefault = neos.'4.4'
++    neo4jDefault = neos.'5.7'
+     neo4j_minor = properties.getOrDefault('neo4jVersion', neo4jDefault).toString().split('\\.')[0..1].join('.')
+ 
+     scalas = [
+diff --git a/gradle/maven-publish.gradle b/gradle/maven-publish.gradle
+new file mode 100644
+index 0000000000..d786d318e7
+--- /dev/null
++++ b/gradle/maven-publish.gradle
+@@ -0,0 +1,54 @@
++allprojects { proj ->
++    plugins.withType(JavaLibraryPlugin) {
++        def openGdsProject = project.projectDir.path.contains("graph-data-science")
++        if (openGdsProject) {
++
++            proj.ext.pomConfig = {
++                name = project.description
++                description = project.description
++                url = 'https://neo4j.com/'
++                licenses {
++                    license {
++                        name = 'GNU General Public License, Version 3'
++                        url = 'https://www.gnu.org/licenses/gpl-3.0-standalone.html'
++                    }
++                }
++                developers {
++                    developer {
++                        id = 'neo4j'
++                        name = 'Team Graph Data Science, Neo4j'
++                        url = 'https://neo4j.com'
++                    }
++                }
++                scm {
++                    url = 'https://github.com/neo4j/graph-data-science'
++                }
++            }
++
++            proj.apply plugin: 'maven-publish'
++
++            afterEvaluate {
++                if (proj.tasks.findByPath("shadowJar") == null) {
++                    publishing {
++                        repositories {
++                            maven {
++                                name = 'pipeline'
++                                url = "file://${rootProject.buildDir}/repo"
++                            }
++                        }
++                        publications {
++                            full(MavenPublication) {
++                                from components.java
++                                artifact sourcesJar
++                                artifact javadocJar
++                                afterEvaluate {
++                                    pom pomConfig
++                                }
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++}
+diff --git a/neo4j-adapter/src/main/java/org/neo4j/gds/compat/Neo4jVersion.java b/neo4j-adapter/src/main/java/org/neo4j/gds/compat/Neo4jVersion.java
+index 0cb402662e..06a3300331 100644
+--- a/neo4j-adapter/src/main/java/org/neo4j/gds/compat/Neo4jVersion.java
++++ b/neo4j-adapter/src/main/java/org/neo4j/gds/compat/Neo4jVersion.java
+@@ -90,7 +90,7 @@ public enum Neo4jVersion {
+     }
+ 
+     static String neo4jVersion() {
+-        var neo4jVersion = Objects.requireNonNullElse(Version.class.getPackage().getImplementationVersion(), "dev");
++        var neo4jVersion = Objects.requireNonNullElse(Version.class.getPackage().getImplementationVersion(), "5.7.0-SNAPSHOT");
+         // some versions have a build thing attached at the end
+         // e.g. 4.0.8,8e921029f7daebacc749034f0cb174f1f2c7a258
+         // This regex follows the logic from org.neo4j.kernel.internal.Version.parseReleaseVersion

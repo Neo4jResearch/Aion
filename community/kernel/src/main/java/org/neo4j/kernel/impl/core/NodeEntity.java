@@ -455,4 +455,22 @@ public class NodeEntity extends AbstractNodeEntity implements RelationshipFactor
     public Relationship relationship(RelationshipTraversalCursor cursor) {
         return internalTransaction.newRelationshipEntity(cursor);
     }
+
+    public int getPropertyKey(String key) {
+        KernelTransaction transaction = internalTransaction.kernelTransaction();
+        int propertyKey = transaction.tokenRead().propertyKey(key);
+        if (propertyKey == TokenRead.NO_TOKEN) {
+            return -1;
+        }
+        return propertyKey;
+    }
+
+    public int getLabelId(String key) {
+        KernelTransaction transaction = internalTransaction.kernelTransaction();
+        int labelId = transaction.tokenRead().nodeLabel(key);
+        if (labelId == TokenRead.NO_TOKEN) {
+            return -1;
+        }
+        return labelId;
+    }
 }

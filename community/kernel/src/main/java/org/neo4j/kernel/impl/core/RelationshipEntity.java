@@ -142,7 +142,7 @@ public class RelationshipEntity implements Relationship, RelationshipVisitor<Run
         return internalTransaction.elementIdMapper().relationshipElementId(id);
     }
 
-    private int typeId() {
+    public int typeId() {
         initializeData();
         return type;
     }
@@ -481,5 +481,14 @@ public class RelationshipEntity implements Relationship, RelationshipVisitor<Run
 
     public InternalTransaction getTransaction() {
         return internalTransaction;
+    }
+
+    public int getPropertyKey(String key) {
+        KernelTransaction transaction = internalTransaction.kernelTransaction();
+        int propertyKey = transaction.tokenRead().propertyKey(key);
+        if (propertyKey == TokenRead.NO_TOKEN) {
+            return -1;
+        }
+        return propertyKey;
     }
 }

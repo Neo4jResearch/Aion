@@ -1,0 +1,251 @@
+ /*
+ * Copyright (c) "Neo4j"
+ * Neo4j Sweden AB [http://neo4j.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+options {
+    STATIC=false;
+}
+
+PARSER_BEGIN(TemporalCypherParser)
+
+ /*
+ * Copyright (c) "Neo4j"
+ * Neo4j Sweden AB [http://neo4j.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.neo4j.fabric.parser;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+
+public class TemporalCypherParser {
+
+    public static void main(String[] args) throws ParseException,TokenMgrError {
+        var parser = new TemporalCypherParser(new java.io.StringReader(args[0]));
+        var struct = parser.start();
+        System.out.println(struct);
+    }
+
+    public static ProcedureStruct parse(String statement) throws ParseException,TokenMgrError {
+        var parser = new TemporalCypherParser(new java.io.StringReader(statement));
+        return parser.start();
+    }
+}
+PARSER_END(TemporalCypherParser)
+
+SKIP : {"\n" | "\r" | "\r\n" | "\\" | "\t" | " "}
+TOKEN [IGNORE_CASE] : {
+        < MATCH: "MATCH" >
+    |   < WHERE: "WHERE" >
+    |   < RETURN: "RETURN" >
+    |   < ALL: "*" >
+    |   < LPAR: "(" >
+    |   < RPAR: ")" >
+    |   < LBRACKET: "[" >
+    |   < RBRACKET: "]" >
+    |   < COMMA: "," >
+    |   < EQUALS: "=" >
+    |   < ID: "ID">
+    |   < USE: "USE" >
+    |   < FOR: "FOR">
+    |   < SYSTEM_TIME: "SYSTEM_TIME">
+    |   < APPLICATION_TIME: "APPLICATION_TIME">
+    |   < AS_OF: "AS OF">
+    |   < FROM: "FROM">
+    |   < TO: "TO">
+    |   < CONTAINED: "CONTAINED">
+    |   < IN: "IN">
+    |   < NUMBER: (<DIGIT>)+ >
+    |   < NAME: <CHAR> (<CHAR> | <DIGIT>)* >
+}
+TOKEN :{ < CHAR: ["a"-"z", "A"-"Z"] > }
+TOKEN :{ < DIGIT: ["0"-"9"] > }
+
+ProcedureStruct start() throws TokenMgrError: {
+        String graphName;
+        long systemStartTime;
+        long systemEndTime;
+        ProcedureStruct struct;
+        Triple<Long, Long, Long> whereResult;
+        long entityId;
+        long applicationStartTime;
+        long applicationEndTime;
+        int type;
+} {
+    <USE>
+    graphName = getName()
+    <FOR> <SYSTEM_TIME> (
+            <AS_OF>
+            systemStartTime = getLong()
+            { systemEndTime = systemStartTime; }
+        |   <FROM>
+            { systemStartTime = getLong() + 1;}
+            <TO>
+            { systemEndTime = getLong() - 1;}
+        |   <CONTAINED> <IN>
+            <LPAR>
+            systemStartTime = getLong()
+            <COMMA>
+            systemEndTime = getLong()
+            <RPAR>
+    )
+    struct = matchClause()
+    whereResult = whereClause(struct.dbName())
+    <EOF>
+    {
+        entityId = whereResult.getLeft();
+        applicationStartTime = whereResult.getMiddle();
+        applicationEndTime = whereResult.getRight();
+        type = (entityId == -1) ? (struct.type() + 3) : struct.type();
+        if (systemStartTime > systemEndTime) {
+            throw new TokenMgrError(
+                    String.format("System start time is greater than end time: %s > %s",
+                    systemStartTime, systemEndTime), -1);
+        }
+
+        return new ProcedureStruct(graphName, type, entityId, struct.hops(), struct.direction(), systemStartTime, systemEndTime, applicationStartTime, applicationEndTime);
+    }
+}
+
+long getLong() throws NumberFormatException: {
+    Token t;
+} {
+    t = <NUMBER>
+    { return Long.parseLong(t.image); }
+}
+
+String getName() throws NumberFormatException: {
+    Token t;
+} {
+    t = <NAME>
+    { return t.image; }
+}
+
+ProcedureStruct matchClause(): {
+    Triple<String, Integer, Integer> triple = new ImmutableTriple<>("", 0, 0);
+    String variableName;
+    int type;
+} {
+    <MATCH> <LPAR> (
+        // ()-[r:hops]-()
+        <RPAR> triple = relationshipExpression() <LPAR> <RPAR>
+        {type = 0; variableName = triple.getLeft();}
+
+        // (n) or (n)-[]-(m)
+        | variableName = getName() {type = 1;} <RPAR>
+        (  triple = relationshipExpression() variableName = nodeExpression()
+            {type = 2;}
+        )?
+
+    )
+    { return new ProcedureStruct(variableName, type, -1L, triple.getMiddle(), triple.getRight(), -1L, -1L, -1L, -1L); }
+}
+
+Triple<String, Integer, Integer> relationshipExpression(): {
+    String name;
+    long hops = 1;
+    int direction;
+} {
+
+    (
+    "-"  <LBRACKET> name = getName() (":" hops = getLong())? <RBRACKET>
+        (
+            "-" {direction = 0;}
+            | "->" {direction=1;}
+        )
+
+
+    | "<-" {direction=-1;}
+    <LBRACKET> name = getName() (":" hops = getLong())? <RBRACKET> "-"
+
+    )
+
+    { return new ImmutableTriple<>(name, (int) hops, direction); }
+}
+
+String nodeExpression(): { String variableName; } {
+    <LPAR> variableName = getName() <RPAR>
+    { return variableName; }
+}
+
+Triple<Long, Long, Long> whereClause(String variableName) throws TokenMgrError: {
+    long entityId;
+    String filterName = "";
+    String result;
+    long startTime = -1;
+    long endTime = -1;
+} {
+    (
+        // todo: check that the filterName matches a variable from the MATCH clause
+        <WHERE>
+        (
+            <ID> <LPAR> filterName = getName() <RPAR> <EQUALS> {entityId = getLong();}
+            |
+            <APPLICATION_TIME>
+                (
+                    <FROM>
+                    { startTime = getLong() + 1; }
+                    <TO>
+                    { endTime = getLong() - 1;}
+                    |
+                    <CONTAINED> <IN> <LPAR>
+                    startTime = getLong()
+                    <COMMA>
+                    endTime = getLong()
+                    <RPAR>
+                )
+                {entityId = -1;}
+        )
+        <RETURN> result = getName()
+
+        | <RETURN> result = getName()
+        {entityId = -1;}
+    )
+    {  if (!result.equalsIgnoreCase(variableName)) {
+            throw new TokenMgrError(
+                    String.format("Wrong return value: %s != %s",
+                    result, variableName), -1);
+       }
+       if (startTime > endTime) {
+           throw new TokenMgrError(
+                               String.format("Start time is greater than end time: %s > %s",
+                               startTime, endTime), -1);
+       }
+       return Triple.of(entityId, startTime, endTime);
+    }
+}
+
+
+
